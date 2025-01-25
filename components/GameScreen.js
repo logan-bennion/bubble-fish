@@ -12,6 +12,7 @@ export default function GameScreen() {
   const [isGameOver, setIsGameOver] = useState(false);
   const [currentFish, setCurrentFish] = useState(null);
   const [fishFood, setFishFood] = useState(0);
+  const [inTutorial, setInTutorial] = useState(false);
   const gameCanvasRef = useRef(null);
   const router = useRouter();
 
@@ -75,7 +76,7 @@ export default function GameScreen() {
     // Any additional game-wide state updates needed for evolution
   };
 
-  if (!gameStarted) {
+  if (!gameStarted && !inTutorial) {
     return (
       <ImageBackground 
         source={require('../assets/background.png')} 
@@ -90,6 +91,12 @@ export default function GameScreen() {
           >
             <Text style={styles.startButtonText}>Start Game</Text>
           </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.startButton}
+            onPress={() => setInTutorial(true)}
+          >
+            <Text style={styles.startButtonText}>Tutorial</Text>
+          </TouchableOpacity>
           <Text style={styles.subtitle}>"Fish are friends, not food." - Bruce</Text>
         </View>
       </ImageBackground>
@@ -99,6 +106,7 @@ export default function GameScreen() {
   return (
     <View style={styles.gameContainer}>
       {/* Game Canvas Area */}
+      {!inTutorial && (
       <View style={styles.canvasWrapper}>
         <GameCanvas 
           ref={gameCanvasRef}
@@ -109,8 +117,10 @@ export default function GameScreen() {
           onFishEvolved={handleFishEvolved}
         />
       </View>
+      )}
 
       {/* Shop Area */}
+      {!inTutorial && (
       <View style={styles.shopWrapper}>
         <Shop 
           score={score} 
@@ -124,9 +134,10 @@ export default function GameScreen() {
           timeLeft={timeLeft}
         />
       </View>
+      )}
 
       {/* Game Over Screen */}
-      {isGameOver && (
+      {isGameOver && !inTutorial && (
         <View style={styles.gameOverMenu}>
           <View style={styles.gameOverContent}>
             <Text style={styles.gameOverTitle}>Game Over!</Text>
@@ -149,7 +160,7 @@ export default function GameScreen() {
       )}
 
       {/* Pause Menu */}
-      {isPaused && !isGameOver && (
+      {isPaused && !isGameOver && !inTutorial && (
         <View style={styles.pauseMenu}>
           <View style={styles.pauseContent}>
             <Text style={styles.pauseTitle}>Paused</Text>
@@ -166,6 +177,26 @@ export default function GameScreen() {
               <Text style={styles.menuButtonText}>Quit</Text>
             </TouchableOpacity>
           </View>
+        </View>
+      )}
+
+      {/* Tutorial Screen */}
+      {inTutorial && (
+        <View style={styles.menuOverlay}>
+          <Text style={styles.title}>Tutorial</Text>
+          <Text style={styles.text}>Welcome to Bubble Fish!</Text>
+          <Text style={styles.text}>Click bubbles to collect money!</Text>
+          <Text style={styles.text}>Buy fish and feed them in the shop!</Text>
+          <Text style={styles.text}>Click fish to evolve when they have fed enough!</Text>
+          <Text style={styles.text}>Click the shark to defend your money!</Text>
+          <Text style={styles.text}>Evolve all your fish to win!</Text>
+          <Text style={styles.text}>Have fun!</Text>
+          <TouchableOpacity 
+            style={styles.startButton}
+            onPress={() => setInTutorial(false)}
+          >
+            <Text style={styles.startButtonText}>Ready to Play?</Text>
+          </TouchableOpacity>
         </View>
       )}
     </View>
