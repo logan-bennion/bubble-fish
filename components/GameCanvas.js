@@ -8,9 +8,12 @@ const GameCanvas = forwardRef(({ onScoreChange, onTimeChange, onPauseChange, onG
 
     const handleContextCreate = (gl) => {
         console.log('GL Context Created');
-        // Set fixed canvas size
-        gl.canvas.width = 800;
-        gl.canvas.height = 600;
+        const height = window.innerHeight;
+        const width = height;
+        
+        // Set canvas size
+        gl.canvas.width = width;
+        gl.canvas.height = height;
         
         engineRef.current = new GameEngine(gl, {
             onScoreChange,
@@ -42,24 +45,38 @@ const GameCanvas = forwardRef(({ onScoreChange, onTimeChange, onPauseChange, onG
     }, [ref]);
 
     return (
-        <View 
-            style={styles.container}
+        <View style={styles.container}
             onClick={handleTouch}
         >
-            <GLView
-                style={styles.canvas}
-                onContextCreate={handleContextCreate}
-            />
+            <View style={styles.canvasContainer}>
+                <GLView
+                    style={styles.canvas}
+                    onContextCreate={handleContextCreate}
+                />
+            </View>
         </View>
     );
 });
 
 const styles = {
     container: {
-        width: 800,
-        height: 600,
+        width: '100vw',
+        height: '100vh',
         backgroundColor: '#fff',
         userSelect: 'none',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    canvasContainer: {
+        width: '100vh', // Square size based on viewport height
+        height: '100vh',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        aspectRatio: '1/1', // Force square aspect ratio
+        maxWidth: '100%',
+        maxHeight: '100%',
     },
     canvas: {
         width: '100%',
