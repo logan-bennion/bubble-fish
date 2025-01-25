@@ -3,6 +3,7 @@ import { mat4 } from 'gl-matrix';
 import React from 'react';
 
 export class GameEngine {
+    
     constructor(gl, callbacks) {
         this.gl = gl;
         this.callbacks = callbacks;
@@ -140,14 +141,14 @@ export class GameEngine {
         try {
             // Define all bubble textures statically
             const bubbleAssets = [
-                require('../assets/images/bubble_big_1.png'),
-                require('../assets/images/bubble_big_2.png'),
-                require('../assets/images/bubble_big_3.png'),
-                require('../assets/images/bubble_big_4.png'),
-                require('../assets/images/bubble_big_5.png'),
-                require('../assets/images/bubble_big_6.png'),
-                require('../assets/images/bubble_big_7.png'),
-                require('../assets/images/bubble_big_8.png'),
+                require('../assets/bubble_big_1.png'),
+                require('../assets/bubble_big_2.png'),
+                require('../assets/bubble_big_3.png'),
+                require('../assets/bubble_big_4.png'),
+                require('../assets/bubble_big_5.png'),
+                require('../assets/bubble_big_6.png'),
+                require('../assets/bubble_big_7.png'),
+                require('../assets/bubble_big_8.png'),
             ];
 
             // Load bubble textures
@@ -451,7 +452,7 @@ export class GameEngine {
             x,
             y,
             size,
-            speed: Math.random() * 5 + 1,
+            speed: Math.random() * 10 + 3,
         });
 
     }
