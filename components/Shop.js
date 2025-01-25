@@ -174,6 +174,7 @@ export default function Shop({ score, setScore, fishFood, setFishFood, currentFi
   };
 
   return (
+    
     <ImageBackground 
       source={require('../assets/shop_background.png')} 
       style={styles.menuContainer}
@@ -184,6 +185,14 @@ export default function Shop({ score, setScore, fishFood, setFishFood, currentFi
           <Text style={styles.statsText}>Score: {score}</Text>
           <Text style={styles.statsText}>Time: {timeLeft}s</Text>
         </View>
+
+      {gameCanvasRef.current?.shark?.pointsStolen > 0 && (
+        <View style={styles.stolenPointsContainer}>
+          <Text style={styles.stolenPointsText}>
+            Points Stolen: {gameCanvasRef.current.shark.pointsStolen}
+          </Text>
+        </View>
+      )}
         
         <Text style={styles.title}>SHOP</Text>
         
@@ -316,5 +325,19 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 10,
     fontSize: 16,
+  },
+  stolenPointsContainer: {
+    backgroundColor: 'rgba(255, 0, 0, 0.2)',
+    borderWidth: 2,
+    borderColor: '#FF0000',
+    borderRadius: 10,
+    padding: 10,
+    marginVertical: 10,
+    alignItems: 'center',
+  },
+  stolenPointsText: {
+    color: '#FF0000',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
 }); 
