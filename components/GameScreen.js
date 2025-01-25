@@ -177,6 +177,7 @@ const styles = StyleSheet.create({
     flex: 1,
     width: '100%',
     height: '100%',
+    overflow: 'hidden',
   },
   menuOverlay: {
     flex: 1,
@@ -227,6 +228,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f0f0f0',
     height: '100vh',
     width: '100vw',
+    overflow: 'hidden',
   },
   canvasWrapper: {
     flex: 1,
@@ -235,13 +237,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     minWidth: 0,
+    overflow: 'hidden',
   },
   shopWrapper: {
     width: 250,
     height: '100%',
     borderLeft: '2px solid #ccc',
     backgroundColor: '#fff',
-    overflowY: 'auto',
+    overflow: 'hidden',
   },
   overlay: {
     position: 'absolute',
