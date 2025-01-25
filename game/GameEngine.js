@@ -462,6 +462,9 @@ export class GameEngine {
             // Update bubble positions
             this.particles = this.particles.filter(particle => {
                 particle.y -= particle.speed;
+                // var period = particle.period * particle.y;
+                // var amplitude = 5 * particle.apmlitude;
+                particle.x = 5 * Math.sin(0.05 * particle.y) + particle.col;
                 return particle.y + particle.size > 0;
             });
 
@@ -486,16 +489,24 @@ export class GameEngine {
         if (!this.gl || !this.gl.canvas) return;
         
         const canvas = this.gl.canvas;
-        const size = Math.random() * 30 + 20; // Bubbles between 20 and 50 pixels
+        const size = 40; // Bubbles between 20 and 50 pixels
+        const strength = Math.ceil(Math.random() * 3);
+        const period = Math.random * 5;
+        const amplitude = Math.random * 2 + 1;
         
         // Keep bubbles within canvas bounds
-        const x = Math.random() * (canvas.width - size * 2) + size;
+        const col = Math.random() * (canvas.width - size * 2) + size;
+        const x = col;
         const y = canvas.height + size;
         
         this.particles.push({
             x,
             y,
             size,
+            strength,
+            period,
+            amplitude,
+            col,
             speed: Math.random() * 10 + 3,
         });
 
@@ -723,19 +734,23 @@ export class GameEngine {
             );
 
             // Make collision detection more forgiving
-            const hitboxSize = particle.size * 2;
+            const hitboxSize = particle.size * 1.3;
 
             // If click is within bubble hitbox
             if (distance < hitboxSize) {
-                // Remove the bubble from regular particles
-                this.particles.splice(i, 1);
+                
                 
                 // Add to popping bubbles with animation frame counter
-                this.poppingBubbles.push({
-                    ...particle,
-                    frame: 0
-                });
-                
+                if (particle.strength <= 1) {
+                    // Remove the bubble from regular particles
+                    this.particles.splice(i, 1);x
+                    this.poppingBubbles.push({
+                        ...particle,
+                        frame: 0
+                    });
+                } else {
+                    particle.strength -= 1;
+                }
                 // Update both internal and external score
                 this.score += 1000;
                 if (this.callbacks.onScoreChange) {
