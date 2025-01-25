@@ -36,6 +36,15 @@ class AudioManager {
             await fishEatSound.setVolumeAsync(0.5);
             this.sounds.fishEat = fishEatSound;
 
+            const sharkExplodeSound = new Audio.Sound();
+            await sharkExplodeSound.loadAsync(require('../assets/audio/shark_explode.wav'));
+            await sharkExplodeSound.setVolumeAsync(0.5);
+            this.sounds.sharkExplode = sharkExplodeSound;
+
+            const sharkHitSound = new Audio.Sound();
+            await sharkHitSound.loadAsync(require('../assets/audio/shark_hit.wav'));
+            await sharkHitSound.setVolumeAsync(0.5);
+            this.sounds.sharkHit = sharkHitSound;
         } catch (error) {
             console.error('Error loading sounds:', error);
         }
@@ -75,6 +84,14 @@ class AudioManager {
 
     async playFishEat() {
         await this.playSound('fishEat');
+    }
+
+    async playSharkExplode() {
+        await this.playSound('sharkExplode');
+    }
+
+    async playSharkHit() {
+        await this.playSound('sharkHit');
     }
 
     async playSound(soundName) {

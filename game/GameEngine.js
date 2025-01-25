@@ -138,8 +138,27 @@ export class GameEngine {
         this.texturesLoaded = {
             background: false,
             bubbles: false,
-            fish: false
+            fish: false,
+            shark: false
         };
+
+        this.shark = {
+            active: false,
+            x: -1,
+            y: 0,
+            direction: 1,
+            currentFrame: 1,
+            clickCount: 0,
+            pointsStolen: 0,
+            speed: 0.005,
+            verticalSpeed: 0.002,  // Added vertical speed
+            verticalOffset: 0,     // Track vertical position
+            scale: 0.2,
+            lastStealTime: Date.now()
+        };
+
+        this.sharkTextures = new Array(8);
+        this.sharkInterval = null;
 
         this.setupGL();
         this.loadTextures();
@@ -332,6 +351,58 @@ export class GameEngine {
                 console.log(`${fishType} textures loaded`);
             }
 
+            // Load shark textures
+            const sharkTextures = [
+                require('../assets/fish_shark_1.png'),
+                require('../assets/fish_shark_2.png'),
+                require('../assets/fish_shark_3.png'),
+                require('../assets/fish_shark_4.png'),
+                require('../assets/fish_shark_5.png'),
+                require('../assets/fish_shark_6.png'),
+                require('../assets/fish_shark_7.png'),
+                require('../assets/fish_shark_8.png'),
+            ];
+
+            for (let i = 0; i < sharkTextures.length; i++) {
+                try {
+                    const asset = Asset.fromModule(sharkTextures[i]);
+                    await asset.downloadAsync();
+                    const { localUri } = asset;
+                    
+                    const texture = this.gl.createTexture();
+                    this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
+                    
+                    const image = new Image();
+                    image.src = localUri;
+                    
+                    await new Promise((resolve) => {
+                        image.onload = () => {
+                            this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
+                            this.gl.texImage2D(
+                                this.gl.TEXTURE_2D,
+                                0,
+                                this.gl.RGBA,
+                                this.gl.RGBA,
+                                this.gl.UNSIGNED_BYTE,
+                                image
+                            );
+                            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
+                            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR);
+                            this.sharkTextures[i] = texture;
+                            resolve();
+                        };
+                        image.onerror = (error) => {
+                            console.error(`Error loading shark texture:`, error);
+                            reject(error);
+                        };
+                    });
+                } catch (error) {
+                    console.error(`Failed to load shark texture:`, error);
+                }
+            }
+            this.texturesLoaded.shark = true;
+            console.log('All shark textures loaded successfully');
+
             this.start();
         } catch (error) {
             console.error('Error loading textures:', error);
@@ -430,7 +501,7 @@ export class GameEngine {
 
     update() {
         if (!this.isPaused && !this.isGameOver) {
-            // Update fish positions
+            // Update fish positions with sin wave
             Object.values(this.fish).forEach(fish => {
                 if (fish.purchased && fish.unlocked) {
                     // Update horizontal position
@@ -444,13 +515,8 @@ export class GameEngine {
                     }
                     
                     // Update vertical position with sine wave movement
-                    fish.verticalOffset += fish.verticalSpeed * fish.verticalDirection;
-                    if (fish.verticalOffset > 0.3) {
-                        fish.verticalDirection = -1;
-                    } else if (fish.verticalOffset < -0.3) {
-                        fish.verticalDirection = 1;
-                    }
-                    fish.y = fish.verticalOffset;
+                    fish.verticalOffset += fish.verticalSpeed;
+                    fish.y = Math.sin(fish.verticalOffset) * 0.3; // Amplitude of 0.3
                 }
             });
 
@@ -475,6 +541,45 @@ export class GameEngine {
                     this.callbacks.onGameOver(this.score);
                 }
                 return; // Stop updating once game is over
+            }
+
+            // Update shark with sin wave
+            if (this.shark.active) {
+                // Update horizontal position
+                this.shark.x += this.shark.speed * this.shark.direction;
+                
+                // Bounce off walls
+                if (this.shark.x > 0.8) { // Right edge
+                    this.shark.direction = -1;
+                } else if (this.shark.x < -0.8) { // Left edge
+                    this.shark.direction = 1;
+                }
+                
+                // Update vertical position with sine wave movement
+                this.shark.verticalOffset += this.shark.verticalSpeed;
+                this.shark.y = Math.sin(this.shark.verticalOffset) * 0.4; // Slightly larger amplitude for shark
+                
+                // Check if shark should steal points
+                const currentTime = Date.now();
+                if (currentTime - this.shark.lastStealTime >= 5000) {
+                    this.score = Math.max(0, this.score - 20);
+                    this.shark.pointsStolen += 20;
+                    this.shark.lastStealTime = currentTime;
+                    
+                    if (this.callbacks.onScoreChange) {
+                        this.callbacks.onScoreChange(this.score);
+                    }
+                }
+
+                // Handle final frame display
+                if (this.shark.currentFrame === 8) {
+                    if (!this.shark.finalMessageTime) {
+                        this.shark.finalMessageTime = Date.now();
+                    } else if (Date.now() - this.shark.finalMessageTime > 2000) {
+                        this.shark.active = false;
+                        this.shark.finalMessageTime = null;
+                    }
+                }
             }
 
             // Draw everything
@@ -514,6 +619,7 @@ export class GameEngine {
 
     draw() {
         if (!this.gl || !this.texturesLoaded.background) {
+            console.log('Missing GL context or background texture');
             return;
         }
 
@@ -572,6 +678,20 @@ export class GameEngine {
                 this.drawFish(fish, fishType);
             }
         });
+
+        // Draw shark if active
+        if (this.shark.active) {
+
+            console.log('Drawing shark at frame:', this.shark.currentFrame);
+            console.log('Shark speed:', this.shark.speed);
+            if (this.shark.currentFrame == 8) {
+                this.shark.speed = 0;
+                audioManager.playSharkExplode();
+                this.shark.speed = 0.001;
+            }
+            this.gl.bindTexture(this.gl.TEXTURE_2D, this.sharkTextures[this.shark.currentFrame - 1]);
+            this.drawShark();
+        }
 
         // Update timer display through callback
         if (this.callbacks.onTimeChange) {
@@ -688,6 +808,53 @@ export class GameEngine {
         this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
     }
 
+    drawShark() {
+        if (!this.gl) return;
+
+        const canvas = this.gl.canvas;
+        const x = this.shark.x;
+        const y = this.shark.y;
+        const scale = this.shark.scale;
+        
+        // Set up vertex positions
+        const positions = new Float32Array([
+            x - scale, y - scale,
+            x + scale, y - scale,
+            x - scale, y + scale,
+            x + scale, y + scale,
+        ]);
+
+        // Flip texcoords horizontally (swapped from previous version)
+        const texcoords = new Float32Array(
+            this.shark.direction === 1 ? [
+                1.0, 1.0,  // Bottom right
+                0.0, 1.0,  // Bottom left
+                1.0, 0.0,  // Top right
+                0.0, 0.0,  // Top left
+            ] : [
+                0.0, 1.0,  // Bottom left
+                1.0, 1.0,  // Bottom right
+                0.0, 0.0,  // Top left
+                1.0, 0.0,  // Top right
+            ]
+        );
+
+        // Upload position data
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.positionBuffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, positions, this.gl.STATIC_DRAW);
+        this.gl.enableVertexAttribArray(this.positionLocation);
+        this.gl.vertexAttribPointer(this.positionLocation, 2, this.gl.FLOAT, false, 0, 0);
+
+        // Upload texture coordinate data
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.texcoordBuffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, texcoords, this.gl.STATIC_DRAW);
+        this.gl.enableVertexAttribArray(this.texcoordLocation);
+        this.gl.vertexAttribPointer(this.texcoordLocation, 2, this.gl.FLOAT, false, 0, 0);
+
+        // Draw the shark
+        this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
+    }
+
     handleTouch(x, y) {
         if (this.isPaused || !this.gl) return;
 
@@ -760,6 +927,36 @@ export class GameEngine {
                 break;
             }
         }
+
+        // Check for shark collision
+        if (this.shark.active && !this.shark.finalMessageTime) {
+            const canvas = this.gl.canvas;
+            const rect = canvas.getBoundingClientRect();
+            const canvasX = (x - rect.left) * (canvas.width / rect.width);
+            const canvasY = (y - rect.top) * (canvas.height / rect.height);
+            
+            // Convert to clip space coordinates
+            const clipX = (canvasX / canvas.width) * 2 - 1;
+            const clipY = -((canvasY / canvas.height) * 2 - 1);
+            
+            // Calculate distance between click and shark
+            const distance = Math.sqrt(
+                Math.pow(clipX - this.shark.x, 2) +
+                Math.pow(clipY - this.shark.y, 2)
+            );
+
+            // If click is within shark hitbox
+            if (distance < this.shark.scale) {
+                this.shark.clickCount++;
+                if (this.shark.clickCount >= 5) {
+                    this.shark.currentFrame = Math.min(8, Math.floor(this.shark.clickCount / 5) + 1);
+                }
+                this.shark.speed += 0.0005;
+                audioManager.playSharkHit();
+                return true;
+            }
+        }
+        return false;
     }
     
     handleKeyPress(event) {
@@ -818,8 +1015,15 @@ export class GameEngine {
                     }
                 });
             });
+            // Clean up shark textures
+            this.sharkTextures.forEach(texture => {
+                if (texture) {
+                    this.gl.deleteTexture(texture);
+                }
+            });
         }
         audioManager.stopBackground();
+        clearInterval(this.sharkInterval);
     }
 
     // Add method to update time
@@ -897,6 +1101,28 @@ export class GameEngine {
             fish.y = 0;
             fish.direction = 1;
             // Speed and scale are already set in the fish object
+
+            // Start shark spawning after first fish purchase
+            if (!this.sharkInterval) {
+                this.startSharkSpawning();
+            }
         }
+    }
+
+    startSharkSpawning() {
+        console.log('Starting shark spawning...');
+        this.sharkInterval = setInterval(() => {
+            if (!this.shark.active) {
+                console.log('Spawning shark...');
+                this.shark.active = true;
+                this.shark.x = -1;  // Start from left
+                this.shark.y = Math.random() * 1.6 - 0.8;  // Random y position
+                this.shark.direction = 1;
+                this.shark.currentFrame = 1;
+                this.shark.clickCount = 0;
+                this.shark.pointsStolen = 0;
+                this.shark.lastStealTime = Date.now();
+            }
+        }, 10000);  // Changed to 10 seconds for testing
     }
 } 
