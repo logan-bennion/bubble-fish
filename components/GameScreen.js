@@ -7,6 +7,7 @@ import Shop from './Shop';
 export default function GameScreen() {
   const [gameStarted, setGameStarted] = useState(false);
   const [score, setScore] = useState(0);
+  const [restart, setRestart] = useState(0);
   const [timeLeft, setTimeLeft] = useState(30);
   const [isPaused, setIsPaused] = useState(false);
   const [isGameOver, setIsGameOver] = useState(false);
@@ -71,6 +72,17 @@ export default function GameScreen() {
     setFishFood(0);
   };
 
+  const handleRestart = () => {
+    setRestart(true);
+    setScore(0);
+    setTimeLeft(30);
+    setIsGameOver(false);
+    setIsPaused(false);
+    setCurrentFish(null);
+    setFishFood(0);
+    
+  };
+
   const handleFishEvolved = (fishType) => {
     console.log(`Fish evolved: ${fishType}`);
     // Any additional game-wide state updates needed for evolution
@@ -101,6 +113,8 @@ export default function GameScreen() {
         </View>
       </ImageBackground>
     );
+
+    
   }
 
   return (
@@ -142,16 +156,16 @@ export default function GameScreen() {
           <View style={styles.gameOverContent}>
             <Text style={styles.gameOverTitle}>Game Over!</Text>
             <Text style={styles.gameOverText}>Final Score: {score}</Text>
-            <Text style={styles.gameOverText}>Time Survived: {30 - timeLeft}s</Text>
+            {/* <Text style={styles.gameOverText}>Time Survived: {30 - timeLeft}s</Text> */}
             <TouchableOpacity 
-              style={styles.menuButton} 
+              style={styles.menuButton}
               onPress={handlePlayAgain}
             >
               <Text style={styles.menuButtonText}>Play Again</Text>
             </TouchableOpacity>
             <TouchableOpacity 
               style={styles.menuButton} 
-              onPress={() => router.replace('/')}
+              onPress={handlePlayAgain}
             >
               <Text style={styles.menuButtonText}>Main Menu</Text>
             </TouchableOpacity>
