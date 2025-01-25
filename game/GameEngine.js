@@ -445,8 +445,9 @@ export class GameEngine {
         if (!this.gl || !this.gl.canvas) return;
         
         const canvas = this.gl.canvas;
-        const size = 40; // Bubbles between 20 and 50 pixels
-        const strength = Math.ceil(Math.random() * 3);
+        const size = 20;
+        const strength = Math.ceil(Math.random() * 3); // Bubbles have up to 3 strength
+        const bonus = strength
         const period = Math.random * 5;
         const amplitude = Math.random * 2 + 1;
         
@@ -460,6 +461,7 @@ export class GameEngine {
             y,
             size,
             strength,
+            bonus,
             period,
             amplitude,
             col,
@@ -521,7 +523,7 @@ export class GameEngine {
         // Convert screen coordinates to clip space (-1 to 1)
         const x = (particle.x / canvas.width) * 2 - 1;
         const y = -((particle.y / canvas.height) * 2 - 1); // Flip Y coordinate
-        const size = (particle.size / canvas.width) * 2;
+        const size = ((particle.size + particle.strength * 10) / canvas.width) * 2;
 
         // Set up vertex positions in clip space
         const positions = new Float32Array([
@@ -660,7 +662,7 @@ export class GameEngine {
             );
 
             // Make collision detection more forgiving
-            const hitboxSize = particle.size * 1.3;
+            const hitboxSize = particle.size + (particle.strength * 10) * 1.3;
 
             // If click is within bubble hitbox
             if (distance < hitboxSize) {
@@ -674,11 +676,11 @@ export class GameEngine {
                         ...particle,
                         frame: 0
                     });
+                    // Update both internal and external score
+                    this.score += 1000 + 5 * (particle.bonus-1); // multiply score for bubble strength
                 } else {
                     particle.strength -= 1;
                 }
-                // Update both internal and external score
-                this.score += 1000;
                 if (this.callbacks.onScoreChange) {
                     this.callbacks.onScoreChange(this.score);
                 }
