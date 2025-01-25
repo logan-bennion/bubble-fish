@@ -187,7 +187,8 @@ export default function GameScreen() {
           <Text style={styles.text}>Welcome to Bubble Fish!</Text>
           <Text style={styles.text}>Click bubbles to collect money!</Text>
           <Text style={styles.text}>Buy fish and feed them in the shop!</Text>
-          <Text style={styles.text}>Click fish to evolve when they have fed enough!</Text>
+          <Text style={styles.text}>Avoid running out of time by buying things!</Text>
+          <Text style={styles.text}>Click fish to evolve when they have been fed enough!</Text>
           <Text style={styles.text}>Click the shark to defend your money!</Text>
           <Text style={styles.text}>Evolve all your fish to win!</Text>
           <Text style={styles.text}>Have fun!</Text>
