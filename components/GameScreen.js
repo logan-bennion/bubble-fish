@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ImageBackground } from 'react-native';
 import { useRouter } from 'expo-router';
 import GameCanvas from './GameCanvas';
 import Shop from './Shop';
@@ -77,15 +77,22 @@ export default function GameScreen() {
 
   if (!gameStarted) {
     return (
-      <View style={styles.menuContainer}>
-        <Text style={styles.title}>Bubble Time</Text>
-        <TouchableOpacity 
-          style={styles.startButton}
-          onPress={() => setGameStarted(true)}
-        >
-          <Text style={styles.startButtonText}>Start Game</Text>
-        </TouchableOpacity>
-      </View>
+      <ImageBackground 
+        source={require('../assets/background.png')} 
+        style={styles.menuContainer}
+        resizeMode="cover"
+      >
+        <View style={styles.menuOverlay}>
+          <Text style={styles.title}>Bubble Fish</Text>
+          <TouchableOpacity 
+            style={styles.startButton}
+            onPress={() => setGameStarted(true)}
+          >
+            <Text style={styles.startButtonText}>Start Game</Text>
+          </TouchableOpacity>
+          <Text style={styles.subtitle}>"Fish are friends, not food." - Bruce</Text>
+        </View>
+      </ImageBackground>
     );
   }
 
@@ -101,10 +108,6 @@ export default function GameScreen() {
           onGameOver={handleGameOver}
           onFishEvolved={handleFishEvolved}
         />
-        <View style={styles.overlay} pointerEvents="none">
-          <Text style={styles.text}>Score: {score}</Text>
-          <Text style={styles.text}>Time: {Math.ceil(timeLeft)}s</Text>
-        </View>
       </View>
 
       {/* Shop Area */}
@@ -118,6 +121,7 @@ export default function GameScreen() {
           setCurrentFish={setCurrentFish}
           addTime={handleAddTime}
           gameCanvasRef={gameCanvasRef}
+          timeLeft={timeLeft}
         />
       </View>
 
@@ -171,23 +175,51 @@ export default function GameScreen() {
 const styles = StyleSheet.create({
   menuContainer: {
     flex: 1,
+    width: '100%',
+    height: '100%',
+  },
+  menuOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(20, 52, 164, 0.6)', // Semi-transparent blue overlay
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#fff',
   },
   title: {
+    fontSize: 64,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    color: '#7393B3',
+    textShadow: '2px 2px 4px rgba(0,0,0,0.5)', // Added shadow for better readability
+  },
+  subtitle: {
     fontSize: 32,
     fontWeight: 'bold',
     marginBottom: 20,
+    color: '#7393B3',
+    textShadow: '2px 2px 4px rgba(0,0,0,0.5)',
+    textAlign: 'center',
+    paddingHorizontal: 20,
   },
   startButton: {
-    backgroundColor: '#4CAF50',
-    padding: 15,
-    borderRadius: 8,
+    backgroundColor: '#89CFF0',
+    padding: 20,
+    borderRadius: 12,
+    marginBottom: 30,
+    minWidth: 200,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   startButtonText: {
-    color: 'white',
-    fontSize: 18,
+    color: '#1434A4',
+    fontSize: 24,
+    fontWeight: 'bold',
   },
   gameContainer: {
     flex: 1,

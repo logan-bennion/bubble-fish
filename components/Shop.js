@@ -11,7 +11,7 @@ const fishImages = {
     sunFish: require('../assets/fish_sun_1.png'),
 };
 
-export default function Shop({ score, setScore, fishFood, setFishFood, currentFish, setCurrentFish, addTime, gameCanvasRef }) {
+export default function Shop({ score, setScore, fishFood, setFishFood, currentFish, setCurrentFish, addTime, gameCanvasRef, timeLeft }) {
   // Fish progression data - moved outside component to prevent resets
   const [fishData, setFishData] = React.useState({
     fishyBoi: {
@@ -175,6 +175,11 @@ export default function Shop({ score, setScore, fishFood, setFishFood, currentFi
 
   return (
     <View style={styles.container}>
+      <View style={styles.statsContainer}>
+        <Text style={styles.statsText}>Score: {score}</Text>
+        <Text style={styles.statsText}>Time: {timeLeft}s</Text>
+      </View>
+      
       <Text style={styles.title}>SHOP</Text>
       
       <View style={styles.fishGrid}>
@@ -223,6 +228,20 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(230, 230, 230, 0.9)',
     padding: 10,
     maxWidth: 300,
+  },
+  statsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    backgroundColor: 'rgba(0, 0, 0, 0.1)',
+    borderRadius: 10,
+    marginBottom: 10,
+  },
+  statsText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
   },
   title: {
     fontSize: 24,
