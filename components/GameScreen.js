@@ -66,6 +66,8 @@ export default function GameScreen() {
     setTimeLeft(30);
     setIsGameOver(false);
     setIsPaused(false);
+    setCurrentFish(null);
+    setFishFood(0);
   };
 
   const handleFishEvolved = (fishType) => {
