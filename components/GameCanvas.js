@@ -3,7 +3,7 @@ import { View } from 'react-native';
 import { GLView } from 'expo-gl';
 import { GameEngine } from '../game/GameEngine';
 
-const GameCanvas = forwardRef(({ onScoreChange, onTimeChange, onPauseChange, onGameOver, onFishEvolved }, ref) => {
+const GameCanvas = forwardRef(({ onScoreChange, onTimeChange, onPauseChange, onGameOver, onFishEvolved, onWin }, ref) => {
     const engineRef = useRef(null);
 
     const handleContextCreate = (gl) => {
@@ -25,7 +25,8 @@ const GameCanvas = forwardRef(({ onScoreChange, onTimeChange, onPauseChange, onG
                 if (onFishEvolved) {
                     onFishEvolved(fishType);
                 }
-            }
+            },
+            onWin
         });
     };
 

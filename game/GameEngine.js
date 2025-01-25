@@ -917,6 +917,15 @@ export class GameEngine {
                     this.evolveFish(fishType);
                     return;
                 }
+
+                if (fish.fishType == 'sunfish') {
+                    // Trigger win condition when sunfish is clicked
+                    if (this.callbacks.onWin) {
+                        this.callbacks.onWin(this.score);
+                    }
+                    this.isGameOver = true;
+                    this.end();
+                }
             }
         });
 
@@ -1103,6 +1112,19 @@ export class GameEngine {
 
         // Delete the evolved fish
         delete this.fish[fishType];
+
+        // Check if it was a sun fish evolution
+        if (fishType === 'sunFish') {
+            // Trigger win condition
+            if (this.callbacks.onWin) {
+                this.callbacks.onWin({
+                    score: this.score,
+                    timeElapsed: Math.floor((Date.now() - this.startTime) / 1000)
+                });
+            }
+            this.isGameOver = true;
+            this.end();
+        }
 
         // Notify the UI to unlock next fish
         if (this.callbacks.onFishEvolved) {

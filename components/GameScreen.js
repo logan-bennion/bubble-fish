@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, ImageBackground } from 'react
 import { useRouter } from 'expo-router';
 import GameCanvas from './GameCanvas';
 import Shop from './Shop';
+import WinScreen from './WinScreen';
 
 export default function GameScreen() {
   const [gameStarted, setGameStarted] = useState(false);
@@ -14,6 +15,8 @@ export default function GameScreen() {
   const [currentFish, setCurrentFish] = useState(null);
   const [fishFood, setFishFood] = useState(0);
   const [inTutorial, setInTutorial] = useState(false);
+  const [showWinScreen, setShowWinScreen] = useState(false);
+  const [timeElapsed, setTimeElapsed] = useState(0);
   const gameCanvasRef = useRef(null);
   const router = useRouter();
 
@@ -88,6 +91,11 @@ export default function GameScreen() {
     // Any additional game-wide state updates needed for evolution
   };
 
+  const handleWin = (stats) => {
+    setShowWinScreen(true);
+    setTimeElapsed(stats.timeElapsed);
+  };
+
   if (!gameStarted && !inTutorial) {
     return (
       <ImageBackground 
@@ -129,6 +137,7 @@ export default function GameScreen() {
           onPauseChange={setIsPaused}
           onGameOver={handleGameOver}
           onFishEvolved={handleFishEvolved}
+          onWin={handleWin}
         />
       </View>
       )}
@@ -148,6 +157,16 @@ export default function GameScreen() {
           timeLeft={timeLeft}
         />
       </View>
+      )}
+
+      {/* Win Screen */}
+      {showWinScreen && (
+        <WinScreen
+          score={score}
+          timeElapsed={timeElapsed}
+          onPlayAgain={handlePlayAgain}
+          onQuit={handleQuit}
+        />
       )}
 
       {/* Game Over Screen */}
