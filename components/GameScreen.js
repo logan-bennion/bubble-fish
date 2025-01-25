@@ -81,7 +81,8 @@ export default function GameScreen() {
 
   return (
     <View style={styles.gameContainer}>
-      <View style={styles.gameArea}>
+      {/* Game Canvas Area */}
+      <View style={styles.canvasWrapper}>
         <GameCanvas 
           ref={gameCanvasRef}
           onScoreChange={setScore}
@@ -94,16 +95,20 @@ export default function GameScreen() {
           <Text style={styles.text}>Time: {Math.ceil(timeLeft)}s</Text>
         </View>
       </View>
-      <Shop 
-        score={score} 
-        setScore={setScore}
-        fishFood={fishFood}
-        setFishFood={setFishFood}
-        currentFish={currentFish}
-        setCurrentFish={setCurrentFish}
-        addTime={handleAddTime}
-        gameCanvasRef={gameCanvasRef}
-      />
+
+      {/* Shop Area */}
+      <View style={styles.shopWrapper}>
+        <Shop 
+          score={score} 
+          setScore={setScore}
+          fishFood={fishFood}
+          setFishFood={setFishFood}
+          currentFish={currentFish}
+          setCurrentFish={setCurrentFish}
+          addTime={handleAddTime}
+          gameCanvasRef={gameCanvasRef}
+        />
+      </View>
 
       {/* Game Over Screen */}
       {isGameOver && (
@@ -176,23 +181,39 @@ const styles = StyleSheet.create({
   gameContainer: {
     flex: 1,
     flexDirection: 'row',
-    userSelect: 'none',
+    backgroundColor: '#f0f0f0',
+    height: '100vh',
+    width: '100vw',
   },
-  gameArea: {
-    flex: 3,
+  canvasWrapper: {
+    flex: 1,
     position: 'relative',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    minWidth: 0,
+  },
+  shopWrapper: {
+    width: 250,
+    height: '100%',
+    borderLeft: '2px solid #ccc',
+    backgroundColor: '#fff',
+    overflowY: 'auto',
   },
   overlay: {
     position: 'absolute',
     top: 20,
     left: 20,
     pointerEvents: 'none',
+    zIndex: 1,
   },
   text: {
     fontSize: 20,
     color: 'black',
     marginBottom: 10,
     userSelect: 'none',
+    fontWeight: 'bold',
+    textShadow: '1px 1px 2px white',
   },
   pauseMenu: {
     position: 'absolute',

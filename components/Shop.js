@@ -47,9 +47,13 @@ export default function Shop({ score, setScore, fishFood, setFishFood, currentFi
     if (score >= selectedFish.cost && canBuyNextFish(fishType)) {
       const newScore = score - selectedFish.cost;
       setScore(newScore);
+      
       if (gameCanvasRef.current) {
         gameCanvasRef.current.updateScore(newScore);
+        // Purchase the fish in the game engine
+        gameCanvasRef.current.purchaseFish(fishType);
       }
+      
       setCurrentFish(fishType);
       setFishFood(0); // Reset food count for new fish
       addTime(selectedFish.cost / 10);
@@ -61,9 +65,13 @@ export default function Shop({ score, setScore, fishFood, setFishFood, currentFi
     if (score >= foodCost && currentFish) {
       const newScore = score - foodCost;
       setScore(newScore);
+      
       if (gameCanvasRef.current) {
         gameCanvasRef.current.updateScore(newScore);
+        // Feed the fish in the game engine
+        gameCanvasRef.current.feedFish(currentFish);
       }
+      
       const newFoodCount = fishFood + 1;
       setFishFood(newFoodCount);
       addTime(foodCost / 10);
@@ -72,7 +80,6 @@ export default function Shop({ score, setScore, fishFood, setFishFood, currentFi
       const currentFishData = fish[currentFish];
       if (newFoodCount >= currentFishData.maxFood) {
         console.log('Fish reached max food:', currentFish);
-        // Don't reset current fish until next fish is bought
       }
     }
   };

@@ -15,6 +15,15 @@ export class GameEngine {
         this.frameCount = 0;
         this.bubbleTextures = new Array(8);
         this.poppingBubbles = [];
+        this.fishTextures = {
+            fishyBoi: new Array(8),
+            speedy: new Array(8),
+            bigFish: new Array(8),
+            clownFish: new Array(8),
+            goldenFish: new Array(8)
+        };
+        this.currentFishFrame = 1;
+        this.isEvolvingFish = false;
         
         // Create a ref for the canvas
         this.canvasRef = React.createRef();
@@ -23,13 +32,86 @@ export class GameEngine {
         this.handleKeyPress = this.handleKeyPress.bind(this);
         window.addEventListener('keydown', this.handleKeyPress);
         
-        this.fish = [{
-            size: 1,
-            feedCount: 0,
-            unlocked: true,
-            cost: 0,
-            name: "Basic Fish"
-        }];
+        this.fish = {
+            fishyBoi: {
+                unlocked: true,
+                purchased: false,
+                currentFrame: 1,
+                isEvolving: false,
+                feedCount: 0,
+                x: 0,
+                y: 0,
+                direction: 1,
+                speed: 0.01,
+                verticalSpeed: 0.005,
+                verticalDirection: 1,
+                verticalOffset: 0,
+                texturePrefix: 'fish_basic'
+            },
+            speedy: {
+                unlocked: false,
+                purchased: false,
+                currentFrame: 1,
+                isEvolving: false,
+                feedCount: 0,
+                x: 0,
+                y: 0,
+                direction: 1,
+                speed: 0.02, // Faster horizontal speed
+                verticalSpeed: 0.008, // Faster vertical speed
+                verticalDirection: 1,
+                verticalOffset: 0,
+                texturePrefix: 'fish_speedy'
+            },
+            bigFish: {
+                unlocked: false,
+                purchased: false,
+                currentFrame: 1,
+                isEvolving: false,
+                feedCount: 0,
+                x: 0,
+                y: 0,
+                direction: 1,
+                speed: 0.008, // Slower due to size
+                verticalSpeed: 0.004,
+                verticalDirection: 1,
+                verticalOffset: 0,
+                texturePrefix: 'fish_tuna',
+                scale: 0.3 // Bigger size
+            },
+            clownFish: {
+                unlocked: false,
+                purchased: false,
+                currentFrame: 1,
+                isEvolving: false,
+                feedCount: 0,
+                x: 0,
+                y: 0,
+                direction: 1,
+                speed: 0.015,
+                verticalSpeed: 0.007,
+                verticalDirection: 1,
+                verticalOffset: 0,
+                texturePrefix: 'fish_clown',
+                scale: 0.15 // Smaller size
+            },
+            goldenFish: {
+                unlocked: false,
+                purchased: false,
+                currentFrame: 1,
+                isEvolving: false,
+                feedCount: 0,
+                x: 0,
+                y: 0,
+                direction: 1,
+                speed: 0.012,
+                verticalSpeed: 0.006,
+                verticalDirection: 1,
+                verticalOffset: 0,
+                texturePrefix: 'fish_sun',
+                scale: 0.25
+            }
+        };
 
         this.availableFish = [
             {
@@ -71,7 +153,7 @@ export class GameEngine {
                 require('../assets/images/bubble_big_8.png'),
             ];
 
-            // Load each texture
+            // Load bubble textures
             for (let i = 0; i < bubbleAssets.length; i++) {
                 const asset = Asset.fromModule(bubbleAssets[i]);
                 await asset.downloadAsync();
@@ -109,7 +191,106 @@ export class GameEngine {
             
             this.bubbleTexture = this.bubbleTextures[0];  // Set initial texture
             this.textureLoaded = true;
-            console.log('All textures loaded');
+            console.log('Bubble textures loaded');
+
+            // Fish texture imports
+            const fishTextures = {
+                fishyBoi: [
+                    require('../assets/fish_basic_1.png'),
+                    require('../assets/fish_basic_2.png'),
+                    require('../assets/fish_basic_3.png'),
+                    require('../assets/fish_basic_4.png'),
+                    require('../assets/fish_basic_5.png'),
+                    require('../assets/fish_basic_6.png'),
+                    require('../assets/fish_basic_7.png'),
+                    require('../assets/fish_basic_8.png'),
+                ],
+                speedy: [
+                    require('../assets/fish_speedy_1.png'),
+                    require('../assets/fish_speedy_2.png'),
+                    require('../assets/fish_speedy_3.png'),
+                    require('../assets/fish_speedy_4.png'),
+                    require('../assets/fish_speedy_5.png'),
+                    require('../assets/fish_speedy_6.png'),
+                    require('../assets/fish_speedy_7.png'),
+                    require('../assets/fish_speedy_8.png'),
+                ],
+                bigFish: [
+                    require('../assets/fish_tuna_1.png'),
+                    require('../assets/fish_tuna_2.png'),
+                    require('../assets/fish_tuna_3.png'),
+                    require('../assets/fish_tuna_4.png'),
+                    require('../assets/fish_tuna_5.png'),
+                    require('../assets/fish_tuna_6.png'),
+                    require('../assets/fish_tuna_7.png'),
+                    require('../assets/fish_tuna_8.png'),
+                ],
+                clownFish: [
+                    require('../assets/fish_clown_1.png'),
+                    require('../assets/fish_clown_2.png'),
+                    require('../assets/fish_clown_3.png'),
+                    require('../assets/fish_clown_4.png'),
+                    require('../assets/fish_clown_5.png'),
+                    require('../assets/fish_clown_6.png'),
+                    require('../assets/fish_clown_7.png'),
+                    require('../assets/fish_clown_8.png'),
+                ],
+                goldenFish: [
+                    require('../assets/fish_sun_1.png'),
+                    require('../assets/fish_sun_2.png'),
+                    require('../assets/fish_sun_3.png'),
+                    require('../assets/fish_sun_4.png'),
+                    require('../assets/fish_sun_5.png'),
+                    require('../assets/fish_sun_6.png'),
+                    require('../assets/fish_sun_7.png'),
+                    require('../assets/fish_sun_8.png'),
+                ],
+            };
+
+            // Load textures for each fish type
+            for (const [fishType, textureArray] of Object.entries(fishTextures)) {
+                console.log(`Loading ${fishType} textures...`);
+                for (let i = 0; i < textureArray.length; i++) {
+                    try {
+                        const asset = Asset.fromModule(textureArray[i]);
+                        await asset.downloadAsync();
+                        const { localUri } = asset;
+                        
+                        const texture = this.gl.createTexture();
+                        this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
+                        
+                        const image = new Image();
+                        image.src = localUri;
+                        
+                        await new Promise((resolve) => {
+                            image.onload = () => {
+                                this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
+                                this.gl.texImage2D(
+                                    this.gl.TEXTURE_2D,
+                                    0,
+                                    this.gl.RGBA,
+                                    this.gl.RGBA,
+                                    this.gl.UNSIGNED_BYTE,
+                                    image
+                                );
+                                this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
+                                this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR);
+                                resolve();
+                            };
+                            image.onerror = (error) => {
+                                console.error(`Error loading ${fishType} frame ${i + 1}:`, error);
+                                resolve();
+                            };
+                        });
+                        
+                        this.fishTextures[fishType][i] = texture;
+                    } catch (error) {
+                        console.error(`Error loading ${fishType} texture ${i + 1}:`, error);
+                    }
+                }
+                console.log(`${fishType} textures loaded`);
+            }
+
             this.start();
         } catch (error) {
             console.error('Error loading textures:', error);
@@ -182,7 +363,6 @@ export class GameEngine {
             console.log('Starting game loop');
             this.gameLoop = requestAnimationFrame(this.update.bind(this));
             this.startTimer();
-            // Force add initial bubble
             this.addBubble();
         }
     }
@@ -208,6 +388,30 @@ export class GameEngine {
 
     update() {
         if (!this.isPaused && !this.isGameOver) {
+            // Update fish positions
+            Object.values(this.fish).forEach(fish => {
+                if (fish.purchased && fish.unlocked) {
+                    // Update horizontal position
+                    fish.x += fish.speed * fish.direction;
+                    
+                    // Reverse direction at screen edges
+                    if (fish.x > 0.8) { // Right edge
+                        fish.direction = -1;
+                    } else if (fish.x < -0.8) { // Left edge
+                        fish.direction = 1;
+                    }
+                    
+                    // Update vertical position with sine wave movement
+                    fish.verticalOffset += fish.verticalSpeed * fish.verticalDirection;
+                    if (fish.verticalOffset > 0.3) {
+                        fish.verticalDirection = -1;
+                    } else if (fish.verticalOffset < -0.3) {
+                        fish.verticalDirection = 1;
+                    }
+                    fish.y = fish.verticalOffset;
+                }
+            });
+
             // Add new bubbles randomly
             if (Math.random() < 0.03) {
                 this.addBubble();
@@ -278,6 +482,14 @@ export class GameEngine {
             return bubble.frame < 8;
         });
 
+        // Draw purchased fish
+        Object.entries(this.fish).forEach(([fishType, fish]) => {
+            if (fish.purchased && fish.unlocked) {
+                this.gl.bindTexture(this.gl.TEXTURE_2D, this.fishTextures[fishType][fish.currentFrame - 1]);
+                this.drawFish(fish, fishType);
+            }
+        });
+
         // Update timer display through callback
         if (this.callbacks.onTimeChange) {
             this.callbacks.onTimeChange(Math.max(0, this.timeLeft));
@@ -330,6 +542,66 @@ export class GameEngine {
         this.gl.vertexAttribPointer(this.texcoordLocation, 2, this.gl.FLOAT, false, 0, 0);
 
         // Draw the bubble
+        this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
+    }
+
+    drawFish(fish, fishType) {
+        if (!this.gl) return;
+
+        const canvas = this.gl.canvas;
+        const currentTexture = this.fishTextures[fishType][fish.currentFrame - 1];
+        
+        // Calculate size relative to canvas while maintaining aspect ratio
+        const baseScale = Math.min(canvas.width, canvas.height) * 0.2;
+        const scale = baseScale * (fish.scale || 0.2); // Use fish-specific scale or default
+        const aspectRatio = 1;
+        const width = scale * aspectRatio;
+        const height = scale;
+        
+        // Convert to clip space coordinates (-1 to 1)
+        const normalizedWidth = (width / canvas.width) * 2;
+        const normalizedHeight = (height / canvas.height) * 2;
+
+        // Use fish's position for x and y
+        const x = fish.x;
+        const y = fish.y;
+
+        // Set up vertex positions in clip space
+        // Flip UVs horizontally when swimming left (reversed from previous version)
+        const texcoords = new Float32Array(
+            fish.direction === 1 ? [
+                1.0, 1.0, // Swimming right
+                0.0, 1.0,
+                1.0, 0.0,
+                0.0, 0.0,
+            ] : [
+                0.0, 1.0, // Swimming left
+                1.0, 1.0,
+                0.0, 0.0,
+                1.0, 0.0,
+            ]
+        );
+
+        const positions = new Float32Array([
+            x - normalizedWidth/2, y - normalizedHeight/2,
+            x + normalizedWidth/2, y - normalizedHeight/2,
+            x - normalizedWidth/2, y + normalizedHeight/2,
+            x + normalizedWidth/2, y + normalizedHeight/2,
+        ]);
+
+        // Upload position data
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.positionBuffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, positions, this.gl.STATIC_DRAW);
+        this.gl.enableVertexAttribArray(this.positionLocation);
+        this.gl.vertexAttribPointer(this.positionLocation, 2, this.gl.FLOAT, false, 0, 0);
+
+        // Upload texture coordinate data
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.texcoordBuffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, texcoords, this.gl.STATIC_DRAW);
+        this.gl.enableVertexAttribArray(this.texcoordLocation);
+        this.gl.vertexAttribPointer(this.texcoordLocation, 2, this.gl.FLOAT, false, 0, 0);
+
+        // Draw the fish
         this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
     }
 
@@ -425,6 +697,14 @@ export class GameEngine {
                     this.gl.deleteTexture(texture);
                 }
             });
+            // Clean up fish textures
+            Object.values(this.fishTextures).forEach(textures => {
+                textures.forEach(texture => {
+                    if (texture) {
+                        this.gl.deleteTexture(texture);
+                    }
+                });
+            });
         }
     }
 
@@ -439,5 +719,64 @@ export class GameEngine {
     // Add method to update score from outside
     updateScore(newScore) {
         this.score = newScore;
+    }
+
+    feedFish(fishType) {
+        const fish = this.fish[fishType];
+        if (fish && fish.purchased) {
+            fish.feedCount++;
+
+            // Update fish frame based on feed count
+            if (fish.feedCount < 10) {
+                fish.currentFrame = Math.floor(fish.feedCount / 2) + 1;
+                if (fish.currentFrame > 6) fish.currentFrame = 6;
+            }
+
+            // Check if fish can evolve
+            if (fish.feedCount >= 10 && !fish.isEvolving) {
+                fish.canEvolve = true;
+            }
+        }
+    }
+
+    handleFishClick() {
+        const currentFish = this.fish[0];
+        if (currentFish.canEvolve && !currentFish.isEvolving) {
+            currentFish.isEvolving = true;
+            this.evolveFish();
+        }
+    }
+
+    async evolveFish() {
+        const currentFish = this.fish[0];
+        
+        // Play evolution animation
+        for (let frame = 7; frame <= 8; frame++) {
+            currentFish.currentFrame = frame;
+            await new Promise(resolve => setTimeout(resolve, 500)); // Half second per frame
+        }
+
+        // Unlock next fish in shop
+        if (this.callbacks.onUnlockNextFish) {
+            this.callbacks.onUnlockNextFish();
+        }
+
+        // Reset evolution state
+        currentFish.isEvolving = false;
+        currentFish.canEvolve = false;
+    }
+
+    // Update purchase method
+    purchaseFish(fishType) {
+        if (this.fish[fishType]) {
+            const fish = this.fish[fishType];
+            fish.purchased = true;
+            fish.unlocked = true;
+            // Keep existing movement properties from the fish object
+            fish.x = 0;
+            fish.y = 0;
+            fish.direction = 1;
+            // Speed and scale are already set in the fish object
+        }
     }
 } 
