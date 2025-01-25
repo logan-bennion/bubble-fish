@@ -15,7 +15,13 @@ export class GameEngine {
         this.frameCount = 0;
         this.bubbleTextures = new Array(8);
         this.poppingBubbles = [];
-        this.fishTextures = new Array(8);
+        this.fishTextures = {
+            fishyBoi: new Array(8),
+            speedy: new Array(8),
+            bigFish: new Array(8),
+            clownFish: new Array(8),
+            goldenFish: new Array(8)
+        };
         this.currentFishFrame = 1;
         this.isEvolvingFish = false;
         
@@ -39,28 +45,71 @@ export class GameEngine {
                 speed: 0.01,
                 verticalSpeed: 0.005,
                 verticalDirection: 1,
-                verticalOffset: 0
+                verticalOffset: 0,
+                texturePrefix: 'fish_basic'
             },
             speedy: {
                 unlocked: false,
                 purchased: false,
                 currentFrame: 1,
                 isEvolving: false,
-                feedCount: 0
+                feedCount: 0,
+                x: 0,
+                y: 0,
+                direction: 1,
+                speed: 0.02, // Faster horizontal speed
+                verticalSpeed: 0.008, // Faster vertical speed
+                verticalDirection: 1,
+                verticalOffset: 0,
+                texturePrefix: 'fish_speedy'
             },
             bigFish: {
                 unlocked: false,
                 purchased: false,
                 currentFrame: 1,
                 isEvolving: false,
-                feedCount: 0
+                feedCount: 0,
+                x: 0,
+                y: 0,
+                direction: 1,
+                speed: 0.008, // Slower due to size
+                verticalSpeed: 0.004,
+                verticalDirection: 1,
+                verticalOffset: 0,
+                texturePrefix: 'fish_tuna',
+                scale: 0.3 // Bigger size
+            },
+            clownFish: {
+                unlocked: false,
+                purchased: false,
+                currentFrame: 1,
+                isEvolving: false,
+                feedCount: 0,
+                x: 0,
+                y: 0,
+                direction: 1,
+                speed: 0.015,
+                verticalSpeed: 0.007,
+                verticalDirection: 1,
+                verticalOffset: 0,
+                texturePrefix: 'fish_clown',
+                scale: 0.15 // Smaller size
             },
             goldenFish: {
                 unlocked: false,
                 purchased: false,
                 currentFrame: 1,
                 isEvolving: false,
-                feedCount: 0
+                feedCount: 0,
+                x: 0,
+                y: 0,
+                direction: 1,
+                speed: 0.012,
+                verticalSpeed: 0.006,
+                verticalDirection: 1,
+                verticalOffset: 0,
+                texturePrefix: 'fish_sun',
+                scale: 0.25
             }
         };
 
@@ -144,64 +193,103 @@ export class GameEngine {
             this.textureLoaded = true;
             console.log('Bubble textures loaded');
 
-            // Define all fish textures statically
-            const fishAssets = [
-                require('../assets/fish_basic_1.png'),
-                require('../assets/fish_basic_2.png'),
-                require('../assets/fish_basic_3.png'),
-                require('../assets/fish_basic_4.png'),
-                require('../assets/fish_basic_5.png'),
-                require('../assets/fish_basic_6.png'),
-                require('../assets/fish_basic_7.png'),
-                require('../assets/fish_basic_8.png'),
-            ];
+            // Fish texture imports
+            const fishTextures = {
+                fishyBoi: [
+                    require('../assets/fish_basic_1.png'),
+                    require('../assets/fish_basic_2.png'),
+                    require('../assets/fish_basic_3.png'),
+                    require('../assets/fish_basic_4.png'),
+                    require('../assets/fish_basic_5.png'),
+                    require('../assets/fish_basic_6.png'),
+                    require('../assets/fish_basic_7.png'),
+                    require('../assets/fish_basic_8.png'),
+                ],
+                speedy: [
+                    require('../assets/fish_speedy_1.png'),
+                    require('../assets/fish_speedy_2.png'),
+                    require('../assets/fish_speedy_3.png'),
+                    require('../assets/fish_speedy_4.png'),
+                    require('../assets/fish_speedy_5.png'),
+                    require('../assets/fish_speedy_6.png'),
+                    require('../assets/fish_speedy_7.png'),
+                    require('../assets/fish_speedy_8.png'),
+                ],
+                bigFish: [
+                    require('../assets/fish_tuna_1.png'),
+                    require('../assets/fish_tuna_2.png'),
+                    require('../assets/fish_tuna_3.png'),
+                    require('../assets/fish_tuna_4.png'),
+                    require('../assets/fish_tuna_5.png'),
+                    require('../assets/fish_tuna_6.png'),
+                    require('../assets/fish_tuna_7.png'),
+                    require('../assets/fish_tuna_8.png'),
+                ],
+                clownFish: [
+                    require('../assets/fish_clown_1.png'),
+                    require('../assets/fish_clown_2.png'),
+                    require('../assets/fish_clown_3.png'),
+                    require('../assets/fish_clown_4.png'),
+                    require('../assets/fish_clown_5.png'),
+                    require('../assets/fish_clown_6.png'),
+                    require('../assets/fish_clown_7.png'),
+                    require('../assets/fish_clown_8.png'),
+                ],
+                goldenFish: [
+                    require('../assets/fish_sun_1.png'),
+                    require('../assets/fish_sun_2.png'),
+                    require('../assets/fish_sun_3.png'),
+                    require('../assets/fish_sun_4.png'),
+                    require('../assets/fish_sun_5.png'),
+                    require('../assets/fish_sun_6.png'),
+                    require('../assets/fish_sun_7.png'),
+                    require('../assets/fish_sun_8.png'),
+                ],
+            };
 
-            console.log('Loading fish textures...', fishAssets);
-            // Load fish textures
-            for (let i = 0; i < fishAssets.length; i++) {
-                try {
-                    const asset = Asset.fromModule(fishAssets[i]);
-                    if (!asset) {
-                        console.error(`Failed to load fish asset ${i + 1}`);
-                        continue;
+            // Load textures for each fish type
+            for (const [fishType, textureArray] of Object.entries(fishTextures)) {
+                console.log(`Loading ${fishType} textures...`);
+                for (let i = 0; i < textureArray.length; i++) {
+                    try {
+                        const asset = Asset.fromModule(textureArray[i]);
+                        await asset.downloadAsync();
+                        const { localUri } = asset;
+                        
+                        const texture = this.gl.createTexture();
+                        this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
+                        
+                        const image = new Image();
+                        image.src = localUri;
+                        
+                        await new Promise((resolve) => {
+                            image.onload = () => {
+                                this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
+                                this.gl.texImage2D(
+                                    this.gl.TEXTURE_2D,
+                                    0,
+                                    this.gl.RGBA,
+                                    this.gl.RGBA,
+                                    this.gl.UNSIGNED_BYTE,
+                                    image
+                                );
+                                this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
+                                this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR);
+                                resolve();
+                            };
+                            image.onerror = (error) => {
+                                console.error(`Error loading ${fishType} frame ${i + 1}:`, error);
+                                resolve();
+                            };
+                        });
+                        
+                        this.fishTextures[fishType][i] = texture;
+                    } catch (error) {
+                        console.error(`Error loading ${fishType} texture ${i + 1}:`, error);
                     }
-                    
-                    await asset.downloadAsync();
-                    const { localUri } = asset;
-                    
-                    const texture = this.gl.createTexture();
-                    this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
-                    
-                    const image = new Image();
-                    image.src = localUri;
-                    
-                    await new Promise((resolve) => {
-                        image.onload = () => {
-                            this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
-                            this.gl.texImage2D(
-                                this.gl.TEXTURE_2D,
-                                0,
-                                this.gl.RGBA,
-                                this.gl.RGBA,
-                                this.gl.UNSIGNED_BYTE,
-                                image
-                            );
-                            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
-                            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR);
-                            resolve();
-                        };
-                        image.onerror = (error) => {
-                            console.error(`Error loading fish frame ${i + 1}:`, error);
-                            resolve();
-                        };
-                    });
-                    
-                    this.fishTextures[i] = texture;
-                } catch (error) {
-                    console.error(`Error loading fish texture ${i + 1}:`, error);
                 }
+                console.log(`${fishType} textures loaded`);
             }
-            console.log('Fish textures loaded');
 
             this.start();
         } catch (error) {
@@ -395,10 +483,10 @@ export class GameEngine {
         });
 
         // Draw purchased fish
-        Object.entries(this.fish).forEach(([type, fish]) => {
+        Object.entries(this.fish).forEach(([fishType, fish]) => {
             if (fish.purchased && fish.unlocked) {
-                this.gl.bindTexture(this.gl.TEXTURE_2D, this.fishTextures[fish.currentFrame - 1]);
-                this.drawFish(fish);
+                this.gl.bindTexture(this.gl.TEXTURE_2D, this.fishTextures[fishType][fish.currentFrame - 1]);
+                this.drawFish(fish, fishType);
             }
         });
 
@@ -457,15 +545,16 @@ export class GameEngine {
         this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
     }
 
-    drawFish(fish) {
+    drawFish(fish, fishType) {
         if (!this.gl) return;
 
         const canvas = this.gl.canvas;
-        const currentTexture = this.fishTextures[fish.currentFrame - 1];
+        const currentTexture = this.fishTextures[fishType][fish.currentFrame - 1];
         
         // Calculate size relative to canvas while maintaining aspect ratio
-        const scale = Math.min(canvas.width, canvas.height) * 0.2;
-        const aspectRatio = 1; // We'll set this properly when image loads
+        const baseScale = Math.min(canvas.width, canvas.height) * 0.2;
+        const scale = baseScale * (fish.scale || 0.2); // Use fish-specific scale or default
+        const aspectRatio = 1;
         const width = scale * aspectRatio;
         const height = scale;
         
@@ -609,10 +698,12 @@ export class GameEngine {
                 }
             });
             // Clean up fish textures
-            this.fishTextures.forEach(texture => {
-                if (texture) {
-                    this.gl.deleteTexture(texture);
-                }
+            Object.values(this.fishTextures).forEach(textures => {
+                textures.forEach(texture => {
+                    if (texture) {
+                        this.gl.deleteTexture(texture);
+                    }
+                });
             });
         }
     }
@@ -678,16 +769,14 @@ export class GameEngine {
     // Update purchase method
     purchaseFish(fishType) {
         if (this.fish[fishType]) {
-            this.fish[fishType].purchased = true;
-            this.fish[fishType].unlocked = true;
-            // Initialize position and movement properties
-            this.fish[fishType].x = 0;
-            this.fish[fishType].y = 0;
-            this.fish[fishType].direction = 1;
-            this.fish[fishType].speed = 0.01;
-            this.fish[fishType].verticalSpeed = 0.005;
-            this.fish[fishType].verticalDirection = 1;
-            this.fish[fishType].verticalOffset = 0;
+            const fish = this.fish[fishType];
+            fish.purchased = true;
+            fish.unlocked = true;
+            // Keep existing movement properties from the fish object
+            fish.x = 0;
+            fish.y = 0;
+            fish.direction = 1;
+            // Speed and scale are already set in the fish object
         }
     }
 } 
