@@ -41,6 +41,9 @@ export default function GameScreen() {
 
   const handleQuit = () => {
     console.log('Handling quit');
+    setFishFood(0);
+    setCurrentFish(null);
+    setScore(0);
     if (gameCanvasRef.current) {
       gameCanvasRef.current.quit();
     }
