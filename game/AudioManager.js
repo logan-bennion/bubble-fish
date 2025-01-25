@@ -80,11 +80,7 @@ class AudioManager {
     }
 
     async playFishEvolve() {
-        if(Math.random() < 0.3) {
-            await this.playSound('fishEvolve');
-        } else {
-            await this.playSound('fishEvolve2');
-        }
+        await this.playSound('fishEvolve2');
     }
 
     async playStoreBuy() {

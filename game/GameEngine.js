@@ -817,6 +817,10 @@ export class GameEngine {
         const y = this.shark.y;
         const scale = this.shark.scale;
         
+        // Store hitbox dimensions in shark object for collision detection
+        this.shark.hitboxWidth = scale * 2.5;  // Make hitbox wider
+        this.shark.hitboxHeight = scale * 1.5;  // Make hitbox taller
+        
         // Set up vertex positions
         const positions = new Float32Array([
             x - scale, y - scale,
@@ -867,6 +871,31 @@ export class GameEngine {
         const canvasX = x * (canvas.width / rect.width);
         const canvasY = y * (canvas.height / rect.height);
 
+        // Convert shark position to canvas coordinates
+        if (this.shark.active && !this.shark.finalMessageTime) {
+            const sharkCanvasX = (this.shark.x + 1) * canvas.width / 2;
+            const sharkCanvasY = (-this.shark.y + 1) * canvas.height / 2;
+            
+            // Calculate rectangular hitbox bounds
+            const halfWidth = (this.shark.hitboxWidth || this.shark.scale) * canvas.width / 4;
+            const halfHeight = (this.shark.hitboxHeight || this.shark.scale) * canvas.height / 4;
+            
+            // Check if click is within rectangular hitbox
+            if (canvasX >= sharkCanvasX - halfWidth &&
+                canvasX <= sharkCanvasX + halfWidth &&
+                canvasY >= sharkCanvasY - halfHeight &&
+                canvasY <= sharkCanvasY + halfHeight) {
+                
+                this.shark.clickCount++;
+                if (this.shark.clickCount >= 5) {
+                    this.shark.currentFrame = Math.min(8, Math.floor(this.shark.clickCount / 5) + 1);
+                }
+                this.shark.speed += 0.0007;
+                audioManager.playSharkHit();
+                return true;
+            }
+        }
+
         // First check for fish clicks (evolution)
         Object.entries(this.fish).forEach(([fishType, fish]) => {
             if (fish.purchased && fish.feedCount >= 10) {
@@ -916,7 +945,7 @@ export class GameEngine {
                         frame: 0
                     });
                     // Update both internal and external score
-                    this.score += 10 + 5 * (particle.bonus-1); // multiply score for bubble strength
+                    this.score += 10 + 15 * (particle.bonus-1); // multiply score for bubble strength
                 } else {
                     particle.strength -= 1;
                 }
@@ -928,34 +957,6 @@ export class GameEngine {
             }
         }
 
-        // Check for shark collision
-        if (this.shark.active && !this.shark.finalMessageTime) {
-            const canvas = this.gl.canvas;
-            const rect = canvas.getBoundingClientRect();
-            const canvasX = (x - rect.left) * (canvas.width / rect.width);
-            const canvasY = (y - rect.top) * (canvas.height / rect.height);
-            
-            // Convert to clip space coordinates
-            const clipX = (canvasX / canvas.width) * 2 - 1;
-            const clipY = -((canvasY / canvas.height) * 2 - 1);
-            
-            // Calculate distance between click and shark
-            const distance = Math.sqrt(
-                Math.pow(clipX - this.shark.x, 2) +
-                Math.pow(clipY - this.shark.y, 2)
-            );
-
-            // If click is within shark hitbox
-            if (distance < this.shark.scale) {
-                this.shark.clickCount++;
-                if (this.shark.clickCount >= 5) {
-                    this.shark.currentFrame = Math.min(8, Math.floor(this.shark.clickCount / 5) + 1);
-                }
-                this.shark.speed += 0.0007;
-                audioManager.playSharkHit();
-                return true;
-            }
-        }
         return false;
     }
     
@@ -965,6 +966,26 @@ export class GameEngine {
             // Notify the UI to show/hide pause menu
             if (this.callbacks.onPauseChange) {
                 this.callbacks.onPauseChange(this.isPaused);
+            }
+        }
+        // Debug keys
+        else if (event.key.toLowerCase() === 's') {
+            // Spawn shark
+            this.shark.active = true;
+            this.shark.x = -1;  // Start from left
+            this.shark.y = Math.random() * 1.6 - 0.8;  // Random y position
+            this.shark.direction = 1;
+            this.shark.currentFrame = 1;
+            this.shark.clickCount = 0;
+            this.shark.pointsStolen = 0;
+            this.shark.lastStealTime = Date.now();
+            this.shark.speed = 0.005;  // Reset speed
+        }
+        else if (event.key.toLowerCase() === 'm') {
+            // Add money/score
+            this.score += 100000;
+            if (this.callbacks.onScoreChange) {
+                this.callbacks.onScoreChange(this.score);
             }
         }
     }
@@ -1123,6 +1144,6 @@ export class GameEngine {
                 this.shark.pointsStolen = 0;
                 this.shark.lastStealTime = Date.now();
             }
-        }, 10000);  // Changed to 10 seconds for testing
+        }, 45000);  // Changed to 10 seconds for testing
     }
 } 
