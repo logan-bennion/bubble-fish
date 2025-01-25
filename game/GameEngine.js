@@ -1,6 +1,7 @@
 import { Asset } from 'expo-asset';
 import { mat4 } from 'gl-matrix';
 import React from 'react';
+import { audioManager } from './AudioManager';
 
 export class GameEngine {
     
@@ -132,6 +133,14 @@ export class GameEngine {
             }
         ];
 
+        // Add background texture
+        this.backgroundTexture = null;
+        this.texturesLoaded = {
+            background: false,
+            bubbles: false,
+            fish: false
+        };
+
         this.setupGL();
         this.loadTextures();
     }
@@ -139,6 +148,40 @@ export class GameEngine {
     async loadTextures() {
         console.log('Loading textures...');
         try {
+            // Load background texture first
+            const backgroundAsset = Asset.fromModule(require('../assets/background.png'));
+            await backgroundAsset.downloadAsync();
+            const { localUri } = backgroundAsset;
+            
+            const texture = this.gl.createTexture();
+            this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
+            
+            const image = new Image();
+            image.src = localUri;
+            
+            await new Promise((resolve) => {
+                image.onload = () => {
+                    this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
+                    this.gl.texImage2D(
+                        this.gl.TEXTURE_2D,
+                        0,
+                        this.gl.RGBA,
+                        this.gl.RGBA,
+                        this.gl.UNSIGNED_BYTE,
+                        image
+                    );
+                    this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
+                    this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR);
+                    this.backgroundTexture = texture;
+                    this.texturesLoaded.background = true;
+                    resolve();
+                };
+                image.onerror = (error) => {
+                    console.error('Error loading background texture:', error);
+                    resolve();
+                };
+            });
+
             // Define all bubble textures statically
             const bubbleAssets = [
                 require('../assets/bubble_big_1.png'),
@@ -176,6 +219,8 @@ export class GameEngine {
                         );
                         this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
                         this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR);
+                        this.bubbleTextures[i] = texture;
+                        this.texturesLoaded.bubbles = true;
                         resolve();
                     };
                     image.onerror = (error) => {
@@ -183,8 +228,6 @@ export class GameEngine {
                         resolve();
                     };
                 });
-                
-                this.bubbleTextures[i] = texture;
             }
             
             this.bubbleTexture = this.bubbleTextures[0];  // Set initial texture
@@ -273,6 +316,8 @@ export class GameEngine {
                                 );
                                 this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
                                 this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR);
+                                this.fishTextures[fishType][i] = texture;
+                                this.texturesLoaded.fish = true;
                                 resolve();
                             };
                             image.onerror = (error) => {
@@ -280,8 +325,6 @@ export class GameEngine {
                                 resolve();
                             };
                         });
-                        
-                        this.fishTextures[fishType][i] = texture;
                     } catch (error) {
                         console.error(`Error loading ${fishType} texture ${i + 1}:`, error);
                     }
@@ -357,11 +400,12 @@ export class GameEngine {
     }
 
     start() {
-        if (!this.gameLoop && this.textureLoaded) {
+        if (!this.gameLoop && this.texturesLoaded.background) {
             console.log('Starting game loop');
             this.gameLoop = requestAnimationFrame(this.update.bind(this));
             this.startTimer();
             this.addBubble();
+            audioManager.playBackground();
         }
     }
 
@@ -418,6 +462,9 @@ export class GameEngine {
             // Update bubble positions
             this.particles = this.particles.filter(particle => {
                 particle.y -= particle.speed;
+                // var period = particle.period * particle.y;
+                // var amplitude = 5 * particle.apmlitude;
+                particle.x = 5 * Math.sin(0.05 * particle.y) + particle.col;
                 return particle.y + particle.size > 0;
             });
 
@@ -442,29 +489,67 @@ export class GameEngine {
         if (!this.gl || !this.gl.canvas) return;
         
         const canvas = this.gl.canvas;
-        const size = Math.random() * 30 + 20; // Bubbles between 20 and 50 pixels
+        const size = 40; // Bubbles between 20 and 50 pixels
+        const strength = Math.ceil(Math.random() * 3);
+        const period = Math.random * 5;
+        const amplitude = Math.random * 2 + 1;
         
         // Keep bubbles within canvas bounds
-        const x = Math.random() * (canvas.width - size * 2) + size;
+        const col = Math.random() * (canvas.width - size * 2) + size;
+        const x = col;
         const y = canvas.height + size;
         
         this.particles.push({
             x,
             y,
             size,
+            strength,
+            period,
+            amplitude,
+            col,
             speed: Math.random() * 10 + 3,
         });
 
     }
 
     draw() {
-        if (!this.gl || !this.bubbleTexture || !this.textureLoaded) {
+        if (!this.gl || !this.texturesLoaded.background) {
             return;
         }
 
         this.gl.clearColor(0.68, 0.85, 0.9, 1.0);
         this.gl.clear(this.gl.COLOR_BUFFER_BIT);
         this.gl.useProgram(this.program);
+
+        // Draw background
+        this.gl.bindTexture(this.gl.TEXTURE_2D, this.backgroundTexture);
+        const backgroundPositions = new Float32Array([
+            -1, -1,  // Bottom left
+            1, -1,   // Bottom right
+            -1, 1,   // Top left
+            1, 1,    // Top right
+        ]);
+        const backgroundTexcoords = new Float32Array([
+            0.0, 1.0,
+            1.0, 1.0,
+            0.0, 0.0,
+            1.0, 0.0,
+        ]);
+
+        // Upload position data
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.positionBuffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, backgroundPositions, this.gl.STATIC_DRAW);
+        this.gl.enableVertexAttribArray(this.positionLocation);
+        this.gl.vertexAttribPointer(this.positionLocation, 2, this.gl.FLOAT, false, 0, 0);
+
+        // Upload texture coordinate data
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.texcoordBuffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, backgroundTexcoords, this.gl.STATIC_DRAW);
+        this.gl.enableVertexAttribArray(this.texcoordLocation);
+        this.gl.vertexAttribPointer(this.texcoordLocation, 2, this.gl.FLOAT, false, 0, 0);
+
+        // Draw the background
+        this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
 
         // Draw regular bubbles
         this.particles.forEach(particle => {
@@ -649,28 +734,34 @@ export class GameEngine {
             );
 
             // Make collision detection more forgiving
-            const hitboxSize = particle.size * 2;
+            const hitboxSize = particle.size * 1.3;
 
             // If click is within bubble hitbox
             if (distance < hitboxSize) {
-                // Remove the bubble from regular particles
-                this.particles.splice(i, 1);
+                
                 
                 // Add to popping bubbles with animation frame counter
-                this.poppingBubbles.push({
-                    ...particle,
-                    frame: 0
-                });
-                
+                if (particle.strength <= 1) {
+                    // Remove the bubble from regular particles
+                    this.particles.splice(i, 1);x
+                    this.poppingBubbles.push({
+                        ...particle,
+                        frame: 0
+                    });
+                } else {
+                    particle.strength -= 1;
+                }
                 // Update both internal and external score
                 this.score += 1000;
                 if (this.callbacks.onScoreChange) {
                     this.callbacks.onScoreChange(this.score);
                 }
+                audioManager.playBubblePop();
                 break;
             }
         }
     }
+    
     handleKeyPress(event) {
         if (event.key === 'Escape') {
             this.togglePause();
@@ -683,8 +774,9 @@ export class GameEngine {
 
     togglePause() {
         this.isPaused = !this.isPaused;
+        audioManager.stopBackground();
         if (!this.isPaused) {
-            // Resume the game loop when unpausing
+            audioManager.playBackground();
             this.gameLoop = requestAnimationFrame(this.update.bind(this));
         }
     }
@@ -727,6 +819,7 @@ export class GameEngine {
                 });
             });
         }
+        audioManager.stopBackground();
     }
 
     // Add method to update time
@@ -759,6 +852,7 @@ export class GameEngine {
                 fish.speed = 0.000001;
                 fish.verticalSpeed = 0.000001;
             }
+            audioManager.playFishEat();
         }
     }
 
@@ -789,6 +883,7 @@ export class GameEngine {
         if (this.callbacks.onFishEvolved) {
             this.callbacks.onFishEvolved(fishType);
         }
+        audioManager.playFishEvolve();
     }
 
     // Update purchase method
