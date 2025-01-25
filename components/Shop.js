@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Image, ImageBackground } from 'react-native';
 import { audioManager } from '../game/AudioManager';
 
 // Import all fish images
@@ -174,51 +174,57 @@ export default function Shop({ score, setScore, fishFood, setFishFood, currentFi
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.statsContainer}>
-        <Text style={styles.statsText}>Score: {score}</Text>
-        <Text style={styles.statsText}>Time: {timeLeft}s</Text>
-      </View>
-      
-      <Text style={styles.title}>SHOP</Text>
-      
-      <View style={styles.fishGrid}>
-        {renderFishButton("fishyBoi")}
-        {renderFishButton("speedy")}
-        {renderFishButton("bigFish")}
-        {renderFishButton("clownFish")}
-        {renderFishButton("sunFish")}
-      </View>
-
-      {/* Fish Food Button */}
-      {canBuyFood() && (
-        <TouchableOpacity 
-          style={[
-            styles.button,
-            styles.buttonEnabled
-          ]}
-          onPress={handleBuyFood}
-        >
-          <Text style={styles.buttonText}>
-            Fish Food (50) - {fishFood}/{currentFish ? fishData[currentFish].maxFood : 0}
-          </Text>
-        </TouchableOpacity>
-      )}
-
-      {/* Current Fish Status */}
-      {currentFish && (
-        <View>
-          <Text style={styles.status}>
-            Current Fish: {fishData[currentFish].name}
-          </Text>
-          {fishFood >= fishData[currentFish].maxFood && (
-            <Text style={styles.evolveHint}>
-              Click the fish to evolve!
-            </Text>
-          )}
+    <ImageBackground 
+      source={require('../assets/shop_background.png')} 
+      style={styles.menuContainer}
+      resizeMode="cover"
+    >
+      <View style={styles.container}>
+        <View style={styles.statsContainer}>
+          <Text style={styles.statsText}>Score: {score}</Text>
+          <Text style={styles.statsText}>Time: {timeLeft}s</Text>
         </View>
-      )}
-    </View>
+        
+        <Text style={styles.title}>SHOP</Text>
+        
+        <View style={styles.fishGrid}>
+          {renderFishButton("fishyBoi")}
+          {renderFishButton("speedy")}
+          {renderFishButton("bigFish")}
+          {renderFishButton("clownFish")}
+          {renderFishButton("sunFish")}
+        </View>
+
+        {/* Fish Food Button */}
+        {canBuyFood() && (
+          <TouchableOpacity 
+            style={[
+              styles.button,
+              styles.buttonEnabled
+            ]}
+            onPress={handleBuyFood}
+          >
+            <Text style={styles.buttonText}>
+              Fish Food (50) - {fishFood}/{currentFish ? fishData[currentFish].maxFood : 0}
+            </Text>
+          </TouchableOpacity>
+        )}
+
+        {/* Current Fish Status */}
+        {currentFish && (
+          <View>
+            <Text style={styles.status}>
+              Current Fish: {fishData[currentFish].name}
+            </Text>
+            {fishFood >= fishData[currentFish].maxFood && (
+              <Text style={styles.evolveHint}>
+                Click the fish to evolve!
+              </Text>
+            )}
+          </View>
+        )}
+      </View>
+    </ImageBackground>
   );
 }
 
