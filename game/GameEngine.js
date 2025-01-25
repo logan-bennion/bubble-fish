@@ -670,7 +670,6 @@ export class GameEngine {
             }
         }
     }
-
     handleKeyPress(event) {
         if (event.key === 'Escape') {
             this.togglePause();
