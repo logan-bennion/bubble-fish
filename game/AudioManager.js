@@ -12,13 +12,13 @@ class AudioManager {
             const backgroundSound = new Audio.Sound();
             await backgroundSound.loadAsync(require('../assets/audio/background_music.mp3'));
             await backgroundSound.setIsLoopingAsync(true);
-            await backgroundSound.setVolumeAsync(0.3);
+            await backgroundSound.setVolumeAsync(0.4);
             this.sounds.background = backgroundSound;
 
             // Load sound effects
             const bubblePopSound = new Audio.Sound();
             await bubblePopSound.loadAsync(require('../assets/audio/bubble_pop.wav'));
-            await bubblePopSound.setVolumeAsync(0.5);
+            await bubblePopSound.setVolumeAsync(0.4);
             this.sounds.bubblePop = bubblePopSound;
 
             const fishEvolveSound = new Audio.Sound();
@@ -28,7 +28,7 @@ class AudioManager {
 
             const storeBuySound = new Audio.Sound();
             await storeBuySound.loadAsync(require('../assets/audio/shop_buy.wav'));
-            await storeBuySound.setVolumeAsync(0.5);
+            await storeBuySound.setVolumeAsync(0.4);
             this.sounds.storeBuy = storeBuySound;
 
             const fishEatSound = new Audio.Sound();
@@ -38,13 +38,18 @@ class AudioManager {
 
             const sharkExplodeSound = new Audio.Sound();
             await sharkExplodeSound.loadAsync(require('../assets/audio/shark_explode.wav'));
-            await sharkExplodeSound.setVolumeAsync(0.5);
+            await sharkExplodeSound.setVolumeAsync(0.25);
             this.sounds.sharkExplode = sharkExplodeSound;
 
             const sharkHitSound = new Audio.Sound();
             await sharkHitSound.loadAsync(require('../assets/audio/shark_hit.wav'));
-            await sharkHitSound.setVolumeAsync(0.5);
+            await sharkHitSound.setVolumeAsync(0.3);
             this.sounds.sharkHit = sharkHitSound;
+
+            const fishEvolve2Sound = new Audio.Sound();
+            await fishEvolve2Sound.loadAsync(require('../assets/audio/fish_evolve_special.wav'));
+            await fishEvolve2Sound.setVolumeAsync(0.5);
+            this.sounds.fishEvolve2 = fishEvolve2Sound;
         } catch (error) {
             console.error('Error loading sounds:', error);
         }
@@ -75,7 +80,11 @@ class AudioManager {
     }
 
     async playFishEvolve() {
-        await this.playSound('fishEvolve');
+        if(Math.random() < 0.3) {
+            await this.playSound('fishEvolve');
+        } else {
+            await this.playSound('fishEvolve2');
+        }
     }
 
     async playStoreBuy() {
