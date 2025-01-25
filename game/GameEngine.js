@@ -1,6 +1,7 @@
 import { Asset } from 'expo-asset';
 import { mat4 } from 'gl-matrix';
 import React from 'react';
+import { audioManager } from './AudioManager';
 
 export class GameEngine {
     
@@ -362,6 +363,7 @@ export class GameEngine {
             this.gameLoop = requestAnimationFrame(this.update.bind(this));
             this.startTimer();
             this.addBubble();
+            audioManager.playBackground();
         }
     }
 
@@ -667,6 +669,7 @@ export class GameEngine {
                 if (this.callbacks.onScoreChange) {
                     this.callbacks.onScoreChange(this.score);
                 }
+                audioManager.playBubblePop();
                 break;
             }
         }
@@ -683,8 +686,9 @@ export class GameEngine {
 
     togglePause() {
         this.isPaused = !this.isPaused;
+        audioManager.stopBackground();
         if (!this.isPaused) {
-            // Resume the game loop when unpausing
+            audioManager.playBackground();
             this.gameLoop = requestAnimationFrame(this.update.bind(this));
         }
     }
@@ -727,6 +731,7 @@ export class GameEngine {
                 });
             });
         }
+        audioManager.stopBackground();
     }
 
     // Add method to update time
@@ -759,6 +764,7 @@ export class GameEngine {
                 fish.speed = 0.000001;
                 fish.verticalSpeed = 0.000001;
             }
+            audioManager.playFishEat();
         }
     }
 
@@ -789,6 +795,7 @@ export class GameEngine {
         if (this.callbacks.onFishEvolved) {
             this.callbacks.onFishEvolved(fishType);
         }
+        audioManager.playFishEvolve();
     }
 
     // Update purchase method
