@@ -187,7 +187,10 @@ export default function Shop({ score, setScore, fishFood, setFishFood, currentFi
             style={styles.coin}
             resizeMode="cover"
           />
-          <Text style={styles.statsText}>Score: {score}</Text>
+          <Text style={styles.statsScore}>{score}</Text>
+        </View>
+
+        <View style={styles.statsContainer}>
           <Text style={styles.statsText}>Time: {timeLeft}s</Text>
         </View>
 
@@ -251,12 +254,18 @@ const styles = StyleSheet.create({
   },
   statsContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
     paddingHorizontal: 10,
     paddingVertical: 5,
     backgroundColor: 'rgba(0, 0, 0, 0.1)',
     borderRadius: 10,
     marginBottom: 10,
+  },
+  statsScore: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#333',
   },
   statsText: {
     fontSize: 18,
@@ -270,11 +279,9 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   coin: {
-    width: 32,
-    height: 32,
+    width: 24,
+    height: 24,
     marginRight: 8,
-    marginTop: 4,
-    marginBottom: 4,
   },
   fishGrid: {
     marginBottom: 20,
