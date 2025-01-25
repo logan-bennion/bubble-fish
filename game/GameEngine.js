@@ -20,7 +20,7 @@ export class GameEngine {
             speedy: new Array(8),
             bigFish: new Array(8),
             clownFish: new Array(8),
-            goldenFish: new Array(8)
+            sunFish: new Array(8)
         };
         this.currentFishFrame = 1;
         this.isEvolvingFish = false;
@@ -46,7 +46,7 @@ export class GameEngine {
                 verticalSpeed: 0.005,
                 verticalDirection: 1,
                 verticalOffset: 0,
-                texturePrefix: 'fish_basic'
+                scale: 0.8
             },
             speedy: {
                 unlocked: false,
@@ -57,11 +57,11 @@ export class GameEngine {
                 x: 0,
                 y: 0,
                 direction: 1,
-                speed: 0.02, // Faster horizontal speed
-                verticalSpeed: 0.008, // Faster vertical speed
+                speed: 0.02,
+                verticalSpeed: 0.008,
                 verticalDirection: 1,
                 verticalOffset: 0,
-                texturePrefix: 'fish_speedy'
+                scale: 0.8
             },
             bigFish: {
                 unlocked: false,
@@ -72,12 +72,11 @@ export class GameEngine {
                 x: 0,
                 y: 0,
                 direction: 1,
-                speed: 0.008, // Slower due to size
+                speed: 0.008,
                 verticalSpeed: 0.004,
                 verticalDirection: 1,
                 verticalOffset: 0,
-                texturePrefix: 'fish_tuna',
-                scale: 0.3 // Bigger size
+                scale: 1.2
             },
             clownFish: {
                 unlocked: false,
@@ -92,10 +91,9 @@ export class GameEngine {
                 verticalSpeed: 0.007,
                 verticalDirection: 1,
                 verticalOffset: 0,
-                texturePrefix: 'fish_clown',
-                scale: 0.15 // Smaller size
+                scale: 1.0
             },
-            goldenFish: {
+            sunFish: {
                 unlocked: false,
                 purchased: false,
                 currentFrame: 1,
@@ -108,8 +106,7 @@ export class GameEngine {
                 verticalSpeed: 0.006,
                 verticalDirection: 1,
                 verticalOffset: 0,
-                texturePrefix: 'fish_sun',
-                scale: 0.25
+                scale: 1.5
             }
         };
 
@@ -127,7 +124,7 @@ export class GameEngine {
                 description: "A larger companion"
             },
             {
-                name: "Golden Fish",
+                name: "Sun Fish",
                 cost: 1000,
                 requiredFeeds: 30,
                 description: "Rare and valuable"
@@ -235,7 +232,7 @@ export class GameEngine {
                     require('../assets/fish_clown_7.png'),
                     require('../assets/fish_clown_8.png'),
                 ],
-                goldenFish: [
+                sunFish: [
                     require('../assets/fish_sun_1.png'),
                     require('../assets/fish_sun_2.png'),
                     require('../assets/fish_sun_3.png'),
@@ -616,7 +613,31 @@ export class GameEngine {
         const canvasX = x * (canvas.width / rect.width);
         const canvasY = y * (canvas.height / rect.height);
 
-        // Check collision with each bubble
+        // First check for fish clicks (evolution)
+        Object.entries(this.fish).forEach(([fishType, fish]) => {
+            if (fish.purchased && fish.feedCount >= 10) {
+                // Convert fish position to canvas coordinates
+                const fishX = (fish.x + 1) * canvas.width / 2;
+                const fishY = (-fish.y + 1) * canvas.height / 2;
+                
+                // Calculate hitbox size based on fish scale
+                const hitboxSize = (fish.scale || 0.8) * canvas.width * 0.2;
+                
+                // Calculate distance between click and fish center
+                const distance = Math.sqrt(
+                    Math.pow(canvasX - fishX, 2) +
+                    Math.pow(canvasY - fishY, 2)
+                );
+
+                // If click is within fish hitbox
+                if (distance < hitboxSize) {
+                    this.evolveFish(fishType);
+                    return;
+                }
+            }
+        });
+
+        // Then check for bubble clicks
         for (let i = this.particles.length - 1; i >= 0; i--) {
             const particle = this.particles[i];
             
@@ -729,12 +750,14 @@ export class GameEngine {
             // Update fish frame based on feed count
             if (fish.feedCount < 10) {
                 fish.currentFrame = Math.floor(fish.feedCount / 2) + 1;
-                if (fish.currentFrame > 6) fish.currentFrame = 6;
             }
 
             // Check if fish can evolve
             if (fish.feedCount >= 10 && !fish.isEvolving) {
                 fish.canEvolve = true;
+                fish.currentFrame = 6;
+                fish.speed = 0.000001;
+                fish.verticalSpeed = 0.000001;
             }
         }
     }
@@ -747,23 +770,25 @@ export class GameEngine {
         }
     }
 
-    async evolveFish() {
-        const currentFish = this.fish[0];
+    async evolveFish(fishType) {
+        const fish = this.fish[fishType];
+        if (!fish || !fish.purchased || fish.feedCount < 10 || fish.isEvolving) return;
+
+        fish.isEvolving = true;
         
         // Play evolution animation
         for (let frame = 7; frame <= 8; frame++) {
-            currentFish.currentFrame = frame;
+            fish.currentFrame = frame;
             await new Promise(resolve => setTimeout(resolve, 500)); // Half second per frame
         }
 
-        // Unlock next fish in shop
-        if (this.callbacks.onUnlockNextFish) {
-            this.callbacks.onUnlockNextFish();
-        }
+        // Delete the evolved fish
+        delete this.fish[fishType];
 
-        // Reset evolution state
-        currentFish.isEvolving = false;
-        currentFish.canEvolve = false;
+        // Notify the UI to unlock next fish
+        if (this.callbacks.onFishEvolved) {
+            this.callbacks.onFishEvolved(fishType);
+        }
     }
 
     // Update purchase method
