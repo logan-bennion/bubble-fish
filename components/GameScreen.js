@@ -65,6 +65,11 @@ export default function GameScreen() {
     setIsPaused(false);
   };
 
+  const handleFishEvolved = (fishType) => {
+    console.log(`Fish evolved: ${fishType}`);
+    // Any additional game-wide state updates needed for evolution
+  };
+
   if (!gameStarted) {
     return (
       <View style={styles.menuContainer}>
@@ -89,6 +94,7 @@ export default function GameScreen() {
           onTimeChange={setTimeLeft}
           onPauseChange={setIsPaused}
           onGameOver={handleGameOver}
+          onFishEvolved={handleFishEvolved}
         />
         <View style={styles.overlay} pointerEvents="none">
           <Text style={styles.text}>Score: {score}</Text>
