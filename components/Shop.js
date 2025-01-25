@@ -182,6 +182,11 @@ export default function Shop({ score, setScore, fishFood, setFishFood, currentFi
     >
       <View style={styles.container}>
         <View style={styles.statsContainer}>
+          <Image 
+            source={require('../assets/coin.png')}
+            style={styles.coin}
+            resizeMode="cover"
+          />
           <Text style={styles.statsText}>Score: {score}</Text>
           <Text style={styles.statsText}>Time: {timeLeft}s</Text>
         </View>
@@ -263,6 +268,13 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 20,
+  },
+  coin: {
+    width: 32,
+    height: 32,
+    marginRight: 8,
+    marginTop: 4,
+    marginBottom: 4,
   },
   fishGrid: {
     marginBottom: 20,
