@@ -9,7 +9,7 @@ export class GameEngine {
         this.gl = gl;
         this.callbacks = callbacks;
         this.score = 0;
-        this.timeLeft = 30;
+        this.timeLeft = 60;
         this.timer = 0;
         this.particles = [];
         this.isPaused = false;
@@ -153,7 +153,7 @@ export class GameEngine {
             speed: 0.005,
             verticalSpeed: 0.002,  // Added vertical speed
             verticalOffset: 0,     // Track vertical position
-            scale: 0.2,
+            scale: 0.4,
             lastStealTime: Date.now()
         };
 
@@ -516,12 +516,12 @@ export class GameEngine {
                     
                     // Update vertical position with sine wave movement
                     fish.verticalOffset += fish.verticalSpeed;
-                    fish.y = Math.sin(fish.verticalOffset) * 0.3; // Amplitude of 0.3
+                    fish.y = Math.sin(fish.verticalOffset) * 0.5; // Amplitude of 0.3
                 }
             });
 
             // Add new bubbles randomly
-            if (Math.random() < 0.03) {
+            if (Math.random() < 0.04) {
                 this.addBubble();
             }
 
@@ -557,11 +557,11 @@ export class GameEngine {
                 
                 // Update vertical position with sine wave movement
                 this.shark.verticalOffset += this.shark.verticalSpeed;
-                this.shark.y = Math.sin(this.shark.verticalOffset) * 0.4; // Slightly larger amplitude for shark
+                this.shark.y = Math.sin(this.shark.verticalOffset) * 0.6; // Slightly larger amplitude for shark
                 
                 // Check if shark should steal points
                 const currentTime = Date.now();
-                if (currentTime - this.shark.lastStealTime >= 5000) {
+                if (currentTime - this.shark.lastStealTime >= 10000) {
                     this.score = Math.max(0, this.score - 20);
                     this.shark.pointsStolen += 20;
                     this.shark.lastStealTime = currentTime;
@@ -759,8 +759,7 @@ export class GameEngine {
         // Calculate size relative to canvas while maintaining aspect ratio
         const baseScale = Math.min(canvas.width, canvas.height) * 0.2;
         const scale = baseScale * (fish.scale || 0.2); // Use fish-specific scale or default
-        const aspectRatio = 1;
-        const width = scale * aspectRatio;
+        const width = scale;
         const height = scale;
         
         // Convert to clip space coordinates (-1 to 1)
@@ -907,9 +906,8 @@ export class GameEngine {
 
             // If click is within bubble hitbox
             if (distance < hitboxSize) {
-                
-                
                 // Add to popping bubbles with animation frame counter
+                audioManager.playSharkHit();
                 if (particle.strength <= 1) {
                     // Remove the bubble from regular particles
                     this.particles.splice(i, 1);x
@@ -918,14 +916,14 @@ export class GameEngine {
                         frame: 0
                     });
                     // Update both internal and external score
-                    this.score += 1000 + 5 * (particle.bonus-1); // multiply score for bubble strength
+                    this.score += 10 + 5 * (particle.bonus-1); // multiply score for bubble strength
                 } else {
                     particle.strength -= 1;
                 }
                 if (this.callbacks.onScoreChange) {
                     this.callbacks.onScoreChange(this.score);
+                    audioManager.playBubblePop();
                 }
-                audioManager.playBubblePop();
                 break;
             }
         }
@@ -953,7 +951,7 @@ export class GameEngine {
                 if (this.shark.clickCount >= 5) {
                     this.shark.currentFrame = Math.min(8, Math.floor(this.shark.clickCount / 5) + 1);
                 }
-                this.shark.speed += 0.0005;
+                this.shark.speed += 0.0007;
                 audioManager.playSharkHit();
                 return true;
             }
